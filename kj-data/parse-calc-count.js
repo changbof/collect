@@ -686,8 +686,6 @@ if(kj[0]!=kj[1]){
    }else{return 0;}
 }else{return 0;}
 }
-
-
 //{{{ 五星定位胆
 
 exports.dwd5x=function(bet, kj){
@@ -1099,7 +1097,6 @@ if(bet2.indexOf(kj[2])!=-1){
    }else{return 0;}
 }else{return 0;}
 }
-
 //{{{ 十一选五玩法
 // 任选一
 exports.gd11x5R1=function(bet, kj){
@@ -1255,7 +1252,6 @@ for(j=0;j<h.length;j++){
 }
 return zs.length/2;
 }
-
  
 //{{{ 快乐十分玩法
 // 任选一 选一数投
@@ -1517,7 +1513,7 @@ exports.k8R7=function(bet, kj){
 }
 
 
-//{{{ 快3
+//快3
 // 和值
 exports.k3hz=function(bet, kj){
 	kj=kj.split(',');
@@ -1545,16 +1541,13 @@ exports.k33ltx=exports.k33tx
 
 // 三同号单选
 exports.k33dx=function(bet, kj){
-	bet=bet.replace(/\*/g,"");
-	bet=bet.split(',');
-	kj=kj.split(',');
-	kj1=kj[0]+kj[1];
-	kj2=kj[2];
-	kj=kj1+","+kj2;
-	return kj.split(',')
-	.some(function(v,i){
-		return bet[i].indexOf(v)==-1;
-	})?0:1;
+	bet=bet.split(' ');
+	kj=kj.replace(/\,/g,"");
+	count=0;
+	for (var i=0,l=bet.length; i<l; i++){
+		if(bet[i].indexOf(kj)!=-1) count=1;
+	}
+	return count;
 }
 
 // 三不同号
@@ -1591,15 +1584,18 @@ exports.k32fx=function(bet, kj){
 
 // 二同号单选
 exports.k32dx=function(bet, kj){
-	bet=bet.split(' ');
-	kj=kj.replace(/\,/g,"");
-	count=0;
-	for (var i=0,l=bet.length; i<l; i++){
-			if(bet[i].indexOf(kj)!=-1) count=1;
-		}
-	return count;
+	
+	bet=bet.replace(/\*/g,"");
+	bet=bet.split(',');
+	kj=kj.split(',');
+	kj1=kj[0]+kj[1];
+	kj2=kj[2];
+	kj=kj1+","+kj2;
+	return kj.split(',')
+	.some(function(v,i){
+		return bet[i].indexOf(v)==-1;
+	})?0:1;
 }
-// }}}
 
 //{{{ 常用算法
 

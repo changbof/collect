@@ -1,11 +1,11 @@
 ﻿// 彩票开奖配置
 var localhost = exports.localhost = 'localhost';
 exports.cp=[
-	 {
+	{
 		title:'新疆时时彩',
 		source:'香雨娱乐平台',
 		name:'xjssc',
-		enable:false,
+		enable:true,
 		timer:'xjssc',
 
 		option:{
@@ -40,11 +40,11 @@ exports.cp=[
 		}
 	},
 	
-	    {
+	{
 		title:'重庆时时彩',
 		source:'网站',
 		name:'cqssc',
-		enable:false,
+		enable:true,
 		timer:'cqssc',
 
 		option:{
@@ -64,7 +64,7 @@ exports.cp=[
 				var m;
 	
 				if(m=str.match(reg)){
-  if(m[2]=='255,255,255,255,255') throw('重庆时时彩解析数据不正确');
+  					if(m[2]=='255,255,255,255,255') throw('重庆时时彩解析数据不正确');
 					return {
 						type:1,
 						time:m[3],
@@ -80,11 +80,11 @@ exports.cp=[
 
 
 
-{
+	{
 		title:'北京PK10',
 		source:'香雨娱乐平台',
 		name:'bjpk10',
-		enable:false,
+		enable:true,
 		timer:'bjpk10',
 
 
@@ -123,7 +123,7 @@ exports.cp=[
 		title:'重庆11选5',
 		source:'彩乐乐',
 		name:'cq11x5',
-		enable:false,
+		enable:true,
 		timer:'cq11x5',
 		option:{
 			host:"www.cailele.com",
@@ -157,7 +157,7 @@ exports.cp=[
 		title:'蒙古快3',
 		source:'彩乐乐',
 		name:'mgk3',
-		enable:false,
+		enable:true,
 		timer:'mgk3',
 
 		option:{
@@ -193,7 +193,7 @@ exports.cp=[
         title:'吉林快3',
 		source:'百度乐彩',
 		name:'jlk3',
-		enable:false,
+		enable:true,
 		timer:'jlk3',
  
 		option:{
@@ -231,7 +231,7 @@ exports.cp=[
 		title:'江西时时彩',
 		source:'官方网站',
 		name:'jxssc',
-		enable:false,
+		enable:true,
 		timer:'jxssc_official',
 		option: {
 			host: 'data.shishicai.cn',
@@ -264,7 +264,7 @@ exports.cp=[
 		title:'江西时时彩',
 		source:'360彩票',
 		name:'jxssc',
-		enable:false,
+		enable:true,
 		timer:'jxssc_360',
 		option: {
 			host: 'cp.360.cn',
@@ -285,7 +285,7 @@ exports.cp=[
 		title:'江西时时彩',
 		source:'百度乐彩',
 		name:'jxssc',
-		enable:false,
+		enable:true,
 		timer:'jxssc_baidu',
 		option: {
 			host: 'baidu.lecai.com',
@@ -322,7 +322,7 @@ exports.cp=[
 		title:'新疆时时彩',
 		source:'新疆福利彩票网',
 		name:'xjssc',
-		enable:false,
+		enable:true,
 		timer:'xjssc',
 
 		option:{
@@ -346,7 +346,7 @@ exports.cp=[
 		title:'福彩3D',
 		source:'500万彩票网',
 		name:'fc3d',
-		enable:false,
+		enable:true,
 		timer:'fc3d',
 
 		option:{
@@ -381,7 +381,7 @@ exports.cp=[
 		title:'排列3',
 		source:'500万彩票网',
 		name:'pai3',
-		enable:false,
+		enable:true,
 		timer:'pai3',
 
 		option:{
@@ -416,7 +416,7 @@ exports.cp=[
 		title:'广东11选5',
 		source:'官方网站',
 		name:'gd11x5',
-		enable:false,
+		enable:true,
 		timer:'gd11x5_official',
 
 		option:{
@@ -449,7 +449,7 @@ exports.cp=[
 		title:'广东11选5',
 		source:'360彩票',
 		name:'gd11x5',
-		enable:false,
+		enable:true,
 		timer:'gd11x5_360',
 
 		option:{
@@ -473,7 +473,7 @@ exports.cp=[
 		title:'广东11选5',
 		source:'百度乐彩',
 		name:'gd11x5',
-		enable:false,
+		enable:true,
 		timer:'gd11x5_baidu',
 
 		option:{
@@ -510,7 +510,7 @@ exports.cp=[
 		title:'江西11选5',
 		source:'官方网站',
 		name:'jx11x5',
-		enable:false,
+		enable:true,
 		timer:'jx11x5_official',
  
 		option:{
@@ -543,7 +543,7 @@ exports.cp=[
 		title:'江西11选5',
 		source:'360彩票',
 		name:'jx11x5',
-		enable:false,
+		enable:true,
 		timer:'jx11x5_360',
  
 		option:{
@@ -567,7 +567,7 @@ exports.cp=[
 		title:'江西11选5',
 		source:'百度乐彩',
 		name:'jx11x5',
-		enable:false,
+		enable:true,
 		timer:'jx11x5_baidu',
  
 		option:{
@@ -604,7 +604,7 @@ exports.cp=[
 		title:'山东11选5',
 		source:'官方网站',
 		name:'sd11x5',
-		enable:false,
+		enable:true,
 		timer:'sd11x5_official', 
 
 		option:{
@@ -637,7 +637,7 @@ exports.cp=[
 		title:'山东11选5',
 		source:'360彩票网',
 		name:'sd11x5',
-		enable:false,
+		enable:true,
 		timer:'sd11x5_360', 
 
 		option:{
@@ -661,7 +661,7 @@ exports.cp=[
 		title:'山东11选5',
 		source:'百度乐彩',
 		name:'sd11x5',
-		enable:false,
+		enable:true,
 		timer:'sd11x5_baidu', 
 
 		option:{
@@ -723,7 +723,7 @@ exports.cp=[
 		title:'北京PK10',
 		source:'百度乐彩',
 		name:'bjpk10',
-		enable:false,
+		enable:true,
 		timer:'bjpk10',
 
 		option:{
@@ -795,7 +795,7 @@ exports.cp=[
 		title:'五分彩',
 		source:'系统彩',
 		name:'qtllc',
-		enable:false,
+		enable:true,
 		timer:'qtllc',
 
 		option:{
@@ -829,7 +829,7 @@ exports.cp=[
 		title:'二分彩',
 		source:'系统彩',
 		name:'lfc',
-		enable:false,
+		enable:true,
 		timer:'lfc',
 		option:{
 			host: "127.1.1.1",
@@ -862,7 +862,7 @@ exports.cp=[
 		title:'分分彩',
 		source:'系统彩',
 		name:'ffc',
-		enable:false,
+		enable:true,
 		timer:'ffc',
 		option:{
 			host: "127.1.1.1",
@@ -910,8 +910,9 @@ exports.submit={
 exports.dbinfo={
 	host: 'localhost',
 	user: 'root',
-	password: '123456@',
-	database:'lottery'
+	password: '123456',
+	database:'lottery',
+	port: 3307
 }
 
 global.log=function(log){
