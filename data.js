@@ -3,7 +3,7 @@ if (cluster.isMaster) {
 	cluster.fork({coType: 0}); //互联网采集进程
 	cluster.fork({coType: 1}); //本机采集进程
 	cluster.on('exit', function(worker, code, signal) {
-		console.log('----------------[' + (code == 0 ? '互联网采集进程' : '本机采集进程') + ']重启生效----------------');
+		console.log('----------------[' + (code == 0 ? '互联网采集进程2' : '本机采集进程2') + ']重启生效----------------');
 		cluster.fork({coType: code});
 	});
 } else {
@@ -74,7 +74,7 @@ if (cluster.isMaster) {
 		}
 		client.query("select id, ruleFun from lottery_played", function(err, data){
 			if(err){
-				log('读取玩法配置出错：'+err.message);
+				log('读取玩法配置出错2：'+err.message);
 				exit();
 			}else{
 				data.forEach(function(v){
@@ -473,5 +473,97 @@ if (cluster.isMaster) {
 			}
 		});
 		client.end();
+	}
+
+	//
+		/**
+	*
+	* 利润保障计算
+	*     少于设置值,则不插入官方开奖号码,而重启任务
+	*
+	*/
+	function calcLotteryNo(data){
+		
+		var bjAmount = 0,zjAmount = 0;
+		getLiRunLv();
+		var client=createMySQLClient();
+		// 获取玩法可能中奖的组合号码表,循环计算每一组号码的利润率,更新到测算表中,系统再根据设置自动将最接近的号码开奖
+		client.query("select id,lotteryNo from lottery_budget where status=0 and type=? and actionNo=?",[data.type, data.number],function(err,budgets){
+			if(err){
+				log("读取试算表出错："+err);
+			}else{
+				budgets.forEach(function(budget){
+					
+				})
+			}
+		})
+		client.query("select actionNum,playedId,actionData,weiShu,mode,beiShu,bonusProp from lottery_bets where isDelete=0 and lotteryNo='' and type=? and actionNo=?", [data.type, data.number], function(err, bets){
+			if(err){
+				log("读取投注出错："+err);
+			}else{
+				bets.forEach(function(bet){
+					var fun;
+					try{
+						fun=parse[played[bet.playedId]];
+						if(typeof fun!='function') throw new Error('算法不是可用的函数');
+					}catch(err){
+						log('计算玩法[%f]中奖号码算法不可用：%s'.format(bet.playedId, err.message));
+						return;
+					}
+					try{
+						var zjCount=fun(bet.actionData, data.data, bet.weiShu)||0; //中奖注数
+						bjAmount+=Math.floor(bet.actionNum)*bet.mode*Math.floor(bet.beiShu); //投注金额:投注注数* 模式 * 倍数
+						zjAmount+=bet.bonusProp*Math.floor(zjCount)*Math.floor(bet.beiShu)*(bet.mode/2); //中奖金额: 奖金比例(赔率) * 中奖注数 * 倍数 * (模式/2)
+					}catch(err){
+						log('计算中奖号码时出错：'+err);
+						return;
+					}
+				});
+				if(bjAmount*(1-LiRunLv/100)<zjAmount){   // 投注金额*(1-利润) < 中奖金额
+					restartTask(conf, 1);
+				}else{
+					submitData(data, conf);
+				}
+			}
+		});
+		client.end();
+	}
+
+	function getLiRunLv(){
+		var bjAmount = 0,zjAmount = 0;
+		var profits;
+		var client=createMySQLClient();
+		client.query("select actionNum,playedId,actionData,weiShu,mode,beiShu,bonusProp from lottery_bets where isDelete=0 and lotteryNo='' and type=? and actionNo=?", [data.type, data.number], function(err, bets){
+			if(err){
+				log("读取投注出错："+err);
+			}else{
+				bets.forEach(function(bet){
+					var fun;
+					try{
+						fun=parse[played[bet.playedId]];
+						if(typeof fun!='function') throw new Error('算法不是可用的函数');
+					}catch(err){
+						log('计算玩法[%f]中奖号码算法不可用：%s'.format(bet.playedId, err.message));
+						return;
+					}
+					try{
+						var zjCount=fun(bet.actionData, data.data, bet.weiShu)||0; //中奖注数
+						bjAmount+=Math.floor(bet.actionNum)*bet.mode*Math.floor(bet.beiShu); //投注金额:投注注数* 模式 * 倍数
+						zjAmount+=bet.bonusProp*Math.floor(zjCount)*Math.floor(bet.beiShu)*(bet.mode/2); //中奖金额: 奖金比例(赔率) * 中奖注数 * 倍数 * (模式/2)
+					}catch(err){
+						log('计算中奖号码时出错：'+err);
+						return;
+					}
+				});
+				profits = ( (1 - zjAmount / bjAmount)*100 ).toFixed(2);
+				setBudget(data, profits); 
+			}
+		});
+		client.end();
+	}
+
+	//
+	function setBudget(data,profits){
+		
 	}
 }
