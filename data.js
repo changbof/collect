@@ -3,7 +3,7 @@ if (cluster.isMaster) {
 	cluster.fork({coType: 0}); //互联网采集进程
 	cluster.fork({coType: 1}); //本机采集进程
 	cluster.on('exit', function(worker, code, signal) {
-		console.log('----------------[' + (code == 0 ? '互联网采集进程2' : '本机采集进程2') + ']重启生效----------------');
+		console.log('----------------[' + (code == 0 ? '互联网采集进程' : '本机采集进程') + ']重启生效----------------');
 		cluster.fork({coType: code});
 	});
 } else {
@@ -15,8 +15,8 @@ if (cluster.isMaster) {
 	var mysql = require('mysql');
 	var played = {};
 	var playcount = "";
-	var LiRunLv = "";
 	var LiRuncount = "";
+	var LiRunLv = "";
 	var lrRange = 1.00; // 利润浮动范围(%)
 	var config = require('./config.js');
 	var calc = require('./kj-data/kj-calc-time.js');
@@ -39,7 +39,8 @@ if (cluster.isMaster) {
 		}, config.restartTime[process.env.coType] * 1000);
 	}
 	var timers={};		// 任务记时器列表
-	var encrypt_key='ee92d325bb142dae8ede38aadc7882ac';
+	//var encrypt_key='ee92d325bb142dae8ede38aadc7882ac';
+	var encrypt_key='263f4c8540d80b5c4c6679509477a62cfddae409';
 	http.request=(function(_request){
 		return function(options,callback){
 			var timeout=options['timeout'],
@@ -107,11 +108,7 @@ if (cluster.isMaster) {
 		}
 	}
 
-	/**
-	*  重启任务
-	*
-	*/
-	function restartTask(conf, sleep, flag){ 
+	function restartTask(conf, sleep, flag){
 		if(sleep<=0) sleep=config.errorSleepTime;
 		if(!timers[conf.name]) timers[conf.name]={};
 		if(!timers[conf.name][conf.timer]) timers[conf.name][conf.timer]={timer:null,option:conf};
@@ -141,7 +138,6 @@ if (cluster.isMaster) {
 				data+=_data.toString();
 			});
 			res.on("end", function(){
-				console.log('---输出---:'+data);
 				try{
 					try{
 						data=conf.parse(data);
@@ -150,10 +146,10 @@ if (cluster.isMaster) {
 					}
 					if (!data || !data.hasOwnProperty('number')) throw('采集时出现错误，稍后重试');
 					data.number = data.number.replace('-', '');
-					//data.number = data.number.replace(/[0]{2,}(\d{1,})$/, '0$1');  // 序号(最后三位)若有两个"0",则替换为一个"0",如"003" => "03"
+//					data.number = data.number.replace(/[0]{2,}(\d{1,})$/, '0$1'); // 序号(最后三位)若有两个"0",则替换为一个"0",如"003" => "03" modify by aboooo at 20160814
 					if (data.hasOwnProperty('data') && data.data.indexOf('255') > -1) throw(conf.title + '卡奖，终止后续处理');
 					try{
-						if( data.type=='25'){ //data.type=='26' || data.type=='5' || data.type=='30' || data.type=='14' ||
+						if(data.type=='25'){ //data.type=='26' || data.type=='5' || data.type=='30' || data.type=='14' || 
 							liRunData(data, conf);
 						}else{
 							submitData(data, conf);
@@ -186,9 +182,14 @@ if (cluster.isMaster) {
 	function submitData(data, conf, source){
 		log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
 		if(arguments[2])
-			log('提交系统自动计算的 '+conf.title+' 的第 '+data.number+' 期数据：'+data.data);
+			log('提交系统自动计算的'+conf.title+'第'+data.number+'数据：'+data.data);
 		else
-			log('提交从'+conf.source+'采集的'+conf.title+'的第'+data.number+'期数据：'+data.data);
+			log('提交从'+conf.source+'采集的'+conf.title+'第'+data.number+'数据：'+data.data);
+			// add by aboooo at 20160815
+			if( data.data.length<3 ){
+				log('提交的数据不完整，系统将放弃提交退出。');
+				restartTask(conf, config.errorSleepTime);
+			}
 		try{
 			var client=mysql.createClient(config.dbinfo);
 		}catch(err){
@@ -280,51 +281,46 @@ if (cluster.isMaster) {
 		client.end();
 	}
 
-	/**
-	*
-	* 利润保障计算
-	*     少于设置值,则不插入官方开奖号码,而重启任务
-	*
-	*/
 	function liRunData(data, conf){
-		var bjAmount = 0,zjAmount = 0;
-		getLiRunLv();
-		var client=createMySQLClient();
-		client.query("select actionNum,playedId,actionData,weiShu,mode,beiShu,bonusProp from lottery_bets where isDelete=0 and lotteryNo='' and type=? and actionNo=?", [data.type, data.number], function(err, bets){
-			if(err){
-				log("读取投注出错："+err);
-			}else{
-				bets.forEach(function(bet){
-					var fun;
-					try{
-						fun=parse[played[bet.playedId]];
-						if(typeof fun!='function') throw new Error('算法不是可用的函数');
-					}catch(err){
-						log('计算玩法[%f]中奖号码算法不可用：%s'.format(bet.playedId, err.message));
-						return;
-					}
-					try{
-						var zjCount=fun(bet.actionData, data.data, bet.weiShu)||0; //中奖注数
-						bjAmount+=Math.floor(bet.actionNum)*bet.mode*Math.floor(bet.beiShu); //投注金额:投注注数* 模式 * 倍数
-						zjAmount+=bet.bonusProp*Math.floor(zjCount)*Math.floor(bet.beiShu)*(bet.mode/2); //中奖金额: 奖金比例(赔率) * 中奖注数 * 倍数 * (模式/2)
-					}catch(err){
-						log('计算中奖号码时出错：'+err);
-						return;
-					}
-				});
-				if(bjAmount*(1-LiRunLv/100)<zjAmount){   // 投注金额*(1-利润) < 中奖金额
+	var bjAmount = 0,zjAmount = 0;
+	getLiRunLv();
+	var client=createMySQLClient();
+	client.query("select actionNum,playedId,actionData,weiShu,mode,beiShu,bonusProp from lottery_bets where isDelete=0 and lotteryNo='' and type=? and actionNo=?", [data.type, data.number], function(err, bets){
+		if(err){
+			log("读取投注出错："+err);
+		}else{
+			bets.forEach(function(bet){
+				var fun;
+				try{
+					fun=parse[played[bet.playedId]];
+					if(typeof fun!='function') throw new Error('算法不是可用的函数');
+				}catch(err){
+					log('计算玩法[%f]中奖号码算法不可用：%s'.format(bet.playedId, err.message));
+					return;
+				}
+				try{
+					var zjCount=fun(bet.actionData, data.data, bet.weiShu)||0;
+					bjAmount+=Math.floor(bet.actionNum)*bet.mode*Math.floor(bet.beiShu);
+					zjAmount+=bet.bonusProp*Math.floor(zjCount)*Math.floor(bet.beiShu)*(bet.mode/2);
+				}catch(err){
+					log('计算中奖号码时出错：'+err);
+					return;
+				}
+			});
+				if(bjAmount*(1-LiRunLv/100)<zjAmount){
+					//restartTask(conf, 1);
 					// 如果从网上采集的数据与系统设置的利润不相符,则系统重新自动计算开奖数据(目前只支持 江苏k3)
-					if(data.type==25) // 江苏快3
+					if(data.type == 25) // 江苏快3
 						genernateData(data,conf);
 					else
 						restartTask(conf, 1);
 				}else{
 					submitData(data, conf);
 				}
-			}
-		});
-		client.end();
-	}
+		}
+	});
+	client.end();
+}
 	
 	function is_need_retask(t) {
 		if (!retask_times.hasOwnProperty(t)) retask_times[t] = 0;
@@ -356,7 +352,7 @@ if (cluster.isMaster) {
 			return false;
 		}
 	}
-	// 计算中奖注数并开奖:每条投注中奖注数
+
 	function calcJ(data, flag){
 		var client=createMySQLClient();
 		sql="select id,playedId,actionData,weiShu,actionName,type from lottery_bets where isDelete=0 and type=? and actionNo=?";
@@ -401,7 +397,7 @@ if (cluster.isMaster) {
 					sqls.push(client.format(sql, [bet.id, zjCount, data.data, 'lottery_running']));
 				});
 				try{
-					setPj(sqls, data); // 设置赔奖
+					setPj(sqls, data);
 				}catch(err){
 					log(err);
 				}
@@ -436,10 +432,11 @@ if (cluster.isMaster) {
 			data+=_data;
 		}).on('end', function(){
 			data=querystring.parse(data);
-			var msg={},
-				hash=crypto.createHash('md5');
+			var msg={};
+			var	hash=crypto.createHash('sha1'); //md5  sha1
 			hash.update(data.key);
-			if(encrypt_key==hash.digest('hex')){
+			var _key = hash.digest('hex');
+			if(encrypt_key == _key){
 				delete data.key;
 				if(req.url=='/data/add'){
 					submitDataInput(data);
@@ -458,13 +455,18 @@ if (cluster.isMaster) {
 
 	function submitDataInput(data){
 		log('提交从前台录入第'+data.number+'数据：'+data.data);
+		// add by aboooo at 20160815
+		if( data.data.length<3 ){
+			log('提交的数据不完整，系统将放弃提交退出。');
+			restartTask(conf, config.errorSleepTime);
+		}
 		try{
 			var client=mysql.createClient(config.dbinfo);
 		}catch(err){
 			throw('连接数据库失败');
 		}
 		data.time=Math.floor((new Date(data.time)).getTime()/1000);
-		client.query("insert into lottery_data(type, time, number, data) values(?,?,?,?) ON DUPLICATE KEY UPDATE `data`=values(`data`),`time`=values(`time`)", [data.type, data.time, data.number, data.data], function(err, result){
+		client.query("insert into lottery_data(type, time, number, data) values(?,?,?,?) on duplicate key update `data`=values(`data`),`time`=values(`time`)", [data.type, data.time, data.number, data.data], function(err, result){
 			if(err){
 				// 普通出错
 				if(err.number==1062){
@@ -484,13 +486,14 @@ if (cluster.isMaster) {
 		});
 		client.end();
 	}
-
+	
 	// ===系统自动开奖===========================================
 	/**
 	*
 	*  生成开奖数据
 	*     生成最符合系统设定的开奖数据
-	*
+	* 
+	*  Add by aboooo at 20160813
 	*/
 	function genernateData(data,conf){
 		log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
@@ -499,7 +502,7 @@ if (cluster.isMaster) {
 		var tempData = {lv:0,data:""};
 		var bjAmount = 0,zjAmount = 0;
 		if(LiRunLv=="") getLiRunLv();
-		// 获取玩法可能中奖的组合号码表,循环计算每一组号码的利润率,符合要求则提交数据
+		// 获取玩法可能中奖的组合号码表
 		//var datas_k3 = ["1,2,3","1,2,4","1,2,5","1,2,6","1,3,4","1,3,5","1,3,6","1,4,5","1,4,6","1,5,6","2,3,4","2,3,5","2,3,6","2,4,5","2,4,6","2,5,6","3,4,5","3,4,6","3,5,6","4,5,6"];
 
 		var client=createMySQLClient();		
@@ -557,5 +560,5 @@ if (cluster.isMaster) {
 	    var r = function () { return Math.floor(Math.random()*6)+1 };
 	    return  r() + "," + r() + "," + r();
 	}
-
+	
 }
