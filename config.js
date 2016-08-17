@@ -1052,7 +1052,7 @@ function getFrom360CPK3(str, type){
 				return v.match(reg)[1];
 			}).join(',');
 			
-			console.log(data);
+			//console.log(data);
 			return data;
 		}catch(err){
 			throw('解析数据失败');

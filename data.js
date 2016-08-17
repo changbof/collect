@@ -39,8 +39,8 @@ if (cluster.isMaster) {
 		}, config.restartTime[process.env.coType] * 1000);
 	}
 	var timers={};		// 任务记时器列表
-	//var encrypt_key='ee92d325bb142dae8ede38aadc7882ac';
-	var encrypt_key='263f4c8540d80b5c4c6679509477a62cfddae409';
+	var encrypt_key='ee92d325bb142dae8ede38aadc7882ac';  // md5
+	// var encrypt_key='263f4c8540d80b5c4c6679509477a62cfddae409'; // sha1
 	http.request=(function(_request){
 		return function(options,callback){
 			var timeout=options['timeout'],
@@ -186,7 +186,7 @@ if (cluster.isMaster) {
 		else
 			log('提交从'+conf.source+'采集的'+conf.title+'第'+data.number+'数据：'+data.data);
 			// add by aboooo at 20160815
-			if( data.data.length<3 ){
+			if( data.data.length<2 ){
 				log('提交的数据不完整，系统将放弃提交退出。');
 				restartTask(conf, config.errorSleepTime);
 			}
@@ -433,7 +433,7 @@ if (cluster.isMaster) {
 		}).on('end', function(){
 			data=querystring.parse(data);
 			var msg={};
-			var	hash=crypto.createHash('sha1'); //md5  sha1
+			var	hash=crypto.createHash('md5'); //md5  sha1
 			hash.update(data.key);
 			var _key = hash.digest('hex');
 			if(encrypt_key == _key){
@@ -456,7 +456,7 @@ if (cluster.isMaster) {
 	function submitDataInput(data){
 		log('提交从前台录入第'+data.number+'数据：'+data.data);
 		// add by aboooo at 20160815
-		if( data.data.length<3 ){
+		if( data.data.length<2 ){
 			log('提交的数据不完整，系统将放弃提交退出。');
 			restartTask(conf, config.errorSleepTime);
 		}
