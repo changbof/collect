@@ -1,7 +1,7 @@
 ﻿// 彩票开奖配置
 var localhost = exports.localhost = 'localhost';
 exports.cp=[
-	{
+	 {
 		title:'新疆时时彩',
 		source:'香雨娱乐平台',
 		name:'xjssc',
@@ -30,7 +30,7 @@ exports.cp=[
 						type:12,
 						time:m[3],
 						number:m[1].replace(/^(\d{8})(\d{2})$/, '$1-$2'),
-                        m1 : m[1],
+                                                m1 : m[1],
 						data:m[2]
 					};
 				}					
@@ -40,7 +40,7 @@ exports.cp=[
 		}
 	},
 	
-	{
+	    {
 		title:'重庆时时彩',
 		source:'网站',
 		name:'cqssc',
@@ -64,7 +64,7 @@ exports.cp=[
 				var m;
 	
 				if(m=str.match(reg)){
-  					if(m[2]=='255,255,255,255,255') throw('重庆时时彩解析数据不正确');
+					if(m[2]=='255,255,255,255,255') throw('重庆时时彩解析数据不正确');
 					return {
 						type:1,
 						time:m[3],
@@ -80,7 +80,7 @@ exports.cp=[
 
 
 
-	{
+{
 		title:'北京PK10',
 		source:'香雨娱乐平台',
 		name:'bjpk10',
@@ -701,6 +701,7 @@ exports.cp=[
 		name:'jsk3',
 		enable:true,
 		timer:'jsk3',
+		type:25,
  
 		option:{
 			host:"cp.360.cn",
@@ -714,7 +715,7 @@ exports.cp=[
 			try{
 				return getFrom360CPK3(str,25);
 			}catch(err){
-				throw('江苏快3解析数据不正确');
+				throw('江苏快3解析数据不正确'); 
 			}
 		}
 	},
@@ -911,8 +912,7 @@ exports.dbinfo={
 	host: 'localhost',
 	user: 'root',
 	password: '123456@',
-	database:'lottery',
-	port: 3307
+	database:'lottery'
 }
 
 global.log=function(log){
@@ -1031,8 +1031,8 @@ function getFrom360CPK3(str, type){
 	match=str.match(reg);
 	var myDate = new Date();
 	var year = myDate.getFullYear();       //年   
-    var month = myDate.getMonth() + 1;     //月   
-    var day = myDate.getDate();            //日
+  	var month = myDate.getMonth() + 1;     //月   
+  	var day = myDate.getDate();            //日
 	if(month < 10) month="0"+month;
 	if(day < 10) day="0"+day;
 	var mytime=year + "-" + month + "-" + day + " " +myDate.toLocaleTimeString();
@@ -1058,11 +1058,49 @@ function getFrom360CPK3(str, type){
 			//throw('解析数据失败');
 			log('解析数据失败,系统进入自动计算程序......');
 			var r = function () { return Math.floor(Math.random()*6)+1 };
-	        data.data = r() + "," + r() + "," + r();
-	        return data;
+	    	data.data = r() + "," + r() + "," + r();
+	    	return data;
 		}
 }
+function getFrom360CPK3_2(str, type){
 
+    str=str.substr(str.indexOf('<div class="kpkjcode">'),720);
+    console.log(str);
+    var reg=/[\s\S]*?<td>(\d+)<\/td>[\s\S]*?<td class="red">((\d\s){2}\d)<\/td>/; 
+    var match=str.match(reg);
+
+    var myDate = new Date();
+    var year = myDate.getFullYear();       //年   
+    var month = myDate.getMonth() + 1;     //月   
+    var day = myDate.getDate();            //日
+    if(month < 10) month="0"+month;
+    if(day < 10) day="0"+day;
+    var mytime=year + "-" + month + "-" + day + " " +myDate.toLocaleTimeString();
+
+    //console.log(match);
+    match[1]=match[1].replace(/(\d{4})(\d{2})/,'$10$2');
+    
+    var data={
+        type:type,
+        time:mytime,
+        number:year+match[1]
+    }  
+                  
+    try{            
+        data.data=match[2].replace(/\s/g,',');
+        //console.log(data);
+        //return data;
+    }catch(err){
+        //throw('解析数据失败');
+        log('解析数据失败,系统进入自动计算程序......');
+    }finally {
+        if(data.data.length<3){
+            var r = function () { return Math.floor(Math.random()*6)+1 };
+            data.data = r() + "," + r() + "," + r();
+        }
+        return data;
+    }
+}
 function getFromPK10(str, type){
 	str=str.substr(str.indexOf('<td class="winnumLeft">'),350).replace(/[\r\n]+/g,'');
 	var reg=/<td class=".*?">(\d+)<\/td>[\s\S]*?<td>(.*)<\/td>[\s\S]*?<td class=".*?">([\d\:\- ]+?)<\/td>[\s\S]*?<\/tr>/,
