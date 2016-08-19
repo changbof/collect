@@ -694,12 +694,12 @@ if (cluster.isMaster) {
 //			throw('解析数据失败');
 //		}
 
-    var myDate = new Date();
+    	var myDate = new Date();
 		if(time)
 			myDate = new Date(time);
 		var year = myDate.getFullYear();       //年   
-	  var month = myDate.getMonth() + 1;     //月   
-	  var day = myDate.getDate();            //日
+	  	var month = myDate.getMonth() + 1;     //月   
+	  	var day = myDate.getDate();            //日
 		if(month < 10) month="0"+month;
 		if(day < 10) day="0"+day;
 		return year + "-" + month + "-" + day + " " + actionTime;
