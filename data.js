@@ -190,7 +190,7 @@ if (cluster.isMaster) {
 			log(err);
 			restartTask(conf, config.errorSleepTime);
 			
-		}).end();
+		}).end();  
 	}
 
 	function submitData(data, conf, source){
