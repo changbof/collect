@@ -1540,15 +1540,24 @@ exports.k33tx=function(bet, kj){
 exports.k33ltx=exports.k33tx
 
 // 三同号单选
-exports.k33dx=function(bet, kj){
-	bet=bet.split(' ');
-	kj=kj.replace(/\,/g,"");
-	count=0;
-	for (var i=0,l=bet.length; i<l; i++){
-		if(bet[i].indexOf(kj)!=-1) count=1;
-	}
-	return count;
-}
+// bet: "111 222 333 444 555 666"  
+//  kj: 1,1,2
+
+
+//exports.k33dx=function(bet, kj){
+//	bet=bet.replace(/\*/g,"");
+//	bet=bet.split(',');
+//	kj=kj.split(',');
+//	kj1=kj[0]+kj[1];
+//	kj2=kj[2];
+//	kj=kj1+","+kj2;
+//	return kj.split(',')
+//	.some(function(v,i){
+//		return bet[i].indexOf(v)==-1;
+//	})?0:1;
+//}
+
+exports.k33dx=exports.k33tx
 
 // 三不同号
 exports.k33x=function(bet, kj){
@@ -1584,17 +1593,13 @@ exports.k32fx=function(bet, kj){
 
 // 二同号单选
 exports.k32dx=function(bet, kj){
-	
-	bet=bet.replace(/\*/g,"");
-	bet=bet.split(',');
-	kj=kj.split(',');
-	kj1=kj[0]+kj[1];
-	kj2=kj[2];
-	kj=kj1+","+kj2;
-	return kj.split(',')
-	.some(function(v,i){
-		return bet[i].indexOf(v)==-1;
-	})?0:1;
+	bet=bet.split(' ');
+	kj=kj.replace(/\,/g,"");
+	count=0;
+	for (var i=0,l=bet.length; i<l; i++){
+			if(bet[i].indexOf(kj)!=-1) count=1;
+		}
+	return count;
 }
 
 //{{{ 常用算法

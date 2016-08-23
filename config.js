@@ -1031,8 +1031,8 @@ function getFrom360CPK3(str, type){
 	match=str.match(reg);
 	var myDate = new Date();
 	var year = myDate.getFullYear();       //年   
-  	var month = myDate.getMonth() + 1;     //月   
-  	var day = myDate.getDate();            //日
+  var month = myDate.getMonth() + 1;     //月   
+  var day = myDate.getDate();            //日
 	if(month < 10) month="0"+month;
 	if(day < 10) day="0"+day;
 	var mytime=year + "-" + month + "-" + day + " " +myDate.toLocaleTimeString();
@@ -1058,8 +1058,8 @@ function getFrom360CPK3(str, type){
 			//throw('解析数据失败');
 			log('解析数据失败,系统进入自动计算程序......');
 			var r = function () { return Math.floor(Math.random()*6)+1 };
-	    	data.data = r() + "," + r() + "," + r();
-	    	return data;
+	    data.data = r() + "," + r() + "," + r();
+	    return data;
 		}
 }
 function getFrom360CPK3_2(str, type){
