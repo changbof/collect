@@ -561,7 +561,7 @@ if (cluster.isMaster) {
 				data.data='';
 				var _data='';
 				
-				var time=Math.floor((new Date(data.time.replace(/-/g,'/'))).getTime()/1000);
+				var time=Math.floor((new Date(data.time.replace(/-/g,'/'))).getTime());
 				var time2=0;
 				
 				var runing = true;
@@ -609,8 +609,8 @@ if (cluster.isMaster) {
 						break;
 					}
 					
-					time2 = Math.floor((new Date()).getTime()/1000);
-					if((time+30) <= time2) {
+					time2 = Math.floor((new Date()).getTime());
+					if((time+30000) <= time2) {
 						break;
 					}
 					
