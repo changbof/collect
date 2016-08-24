@@ -16,7 +16,7 @@ if (cluster.isMaster) {
 	var played = {};
 	var playcount = "";
 	var LiRuncount = "";
-	var LiRunLv = "";
+	var LiRunLv = "0";
 	var lrRange = "5"; // 利润浮动范围(%)
 	var Typeftime = "";
 	var config = require('./config.js');
@@ -130,6 +130,10 @@ if (cluster.isMaster) {
 	}
 
 	function run(conf){
+		if(conf.type==25) getTypeFTime(conf.type);
+		getLrRange();
+		getLiRunLv();
+
 		if(timers[conf.name][conf.timer].timer) clearTimeout(timers[conf.name][conf.timer].timer);
 		log('开始从'+conf.source+'采集'+conf.title+'数据');
 		var option=JSON.parse(JSON.stringify(conf.option));
@@ -140,11 +144,9 @@ if (cluster.isMaster) {
 			});
 			res.on("end", function(){
 				try{
-
 					//如果是快3，就走系统自动开奖流程
 					if(conf.type==25){
 						try{
-							getTypeFTime(conf.type);
 							systemKJ(conf.type,null,conf);							
 						}catch(err){
 							restartTask(conf, config.errorSleepTime);
@@ -212,7 +214,7 @@ if (cluster.isMaster) {
 		}catch(err){
 			throw('连接数据库失败');
 		}
-		data.time=Math.floor((new Date(data.time)).getTime()/1000);
+		data.time=Math.floor((new Date(data.time)).getTime()/1000); // 秒数
 		client.query("insert into lottery_data(type, time, number, data) values(?,?,?,?)", [data.type, data.time, data.number, data.data], function(err, result){
 			if(err){
 				// 普通出错
@@ -331,7 +333,6 @@ if (cluster.isMaster) {
 
 	function liRunData(data, conf){
 	var bjAmount = 0,zjAmount = 0;
-	getLiRunLv();
 	var client=createMySQLClient();
 	client.query("select actionNum,playedId,actionData,weiShu,mode,beiShu,bonusProp from lottery_bets where isDelete=0 and lotteryNo='' and type=? and actionNo=?", [data.type, data.number], function(err, bets){
 		if(err){
@@ -551,8 +552,7 @@ if (cluster.isMaster) {
 
 		var tempData = {lv:0,data:""};
 		var bjAmount = 0,zjAmount = 0;
-		getLiRunLv();
-    getLrRange();
+
 		var client=createMySQLClient();		
 		client.query("select actionNum,playedId,actionData,weiShu,mode,beiShu,bonusProp from lottery_bets where isDelete=0 and lotteryNo='' and type=? and actionNo=?", [data.type, data.number], function(err, bets){
 			if(err){
@@ -591,12 +591,12 @@ if (cluster.isMaster) {
 
 					var lv = ( (1 - zjAmount / bjAmount)*100 ).toFixed(2);
 					
-					if(lv < 0) continue;
+					// if(lv < 0) continue;  // 系统利率为负值时，此判断应去掉
 
-					tempData.lv = lv;
+					//tempData.lv = lv;
 					tempData.data = _data;
 
-					log('==> genernateData():  bjAmount='+bjAmount+',zjAmount='+zjAmount+',LiRunLv='+LiRunLv+',lv='+lv+',_data='+_data);
+					log('==> genernateData():  bjAmount='+bjAmount+',zjAmount='+zjAmount+',LiRunLv='+LiRunLv+',lrRange='+lrRange+',lv='+lv+',_data='+_data);
 					if (Math.abs(tempData.lv - LiRunLv) > Math.abs(lv - LiRunLv)) {
 						tempData.lv = lv;
 						tempData.data = _data;
@@ -619,9 +619,9 @@ if (cluster.isMaster) {
 				data.data = tempData.data;
 				
 				try{
-						submitData(data, conf, 'system');
+					submitData(data, conf, 'system');
 				}catch(err){
-						throw('提交出错：'+err);
+					throw('提交出错：'+err);
 				}
 			}
 		});
@@ -642,18 +642,18 @@ if (cluster.isMaster) {
 	*/
 	function systemKJ(type,time,conf){
 		var result = {type:type};
-		if(time===null)
-			time = Math.floor((new Date()).getTime());
-			
-		Typeftime = Typeftime?parseInt(Typeftime):20;
-		var action_time = dtFormat(time + Typeftime,'HH:mm:ss');
 		try{
 			var client=createMySQLClient();
 		}catch(err){
 			log(err);
 			exit();
 		}
-		log('==> systemKJ(): time:'+time+',action_time:'+action_time);
+		if(time===null)
+			time = Math.floor((new Date()).getTime()); // 单位：毫秒
+			
+		Typeftime = Typeftime?parseInt(Typeftime):30;
+		var action_time = dtFormat(time + Typeftime*1000,'HH:mm:ss');
+		log('==> systemKJ(): time:'+time+',action_time:'+action_time+',Typeftime='+Typeftime);
 		client.query("SELECT actionNo,actionTime FROM lottery_data_time WHERE type=? AND actionTime <=? ORDER BY actionTime DESC LIMIT 1", [type,action_time], function(err, data){
 			if(err){
 				log('读取彩种时间配置出错：'+err.message);
@@ -666,14 +666,13 @@ if (cluster.isMaster) {
 					});
 					doSubmit(result,time,conf);
 				}else{
-				  //取上一天最后一期期号与开奖时间
-  				//log('get last day action time.');
+					//取上一天最后一期期号与开奖时间
+  					//log('get last day action time.');
 					client.query("SELECT actionNo,actionTime FROM lottery_data_time WHERE type=? ORDER BY actionTime DESC LIMIT 1",[type], function(err, data){
-						log('data.length='+data.length);
 						data.forEach(function(v){
 							result.time = v.actionTime;
 							result.number = v.actionNo;
-							time = time - 24 * 3600;
+							time = time - 24 * 3600 * 1000;
 						});
 						doSubmit(result,time,conf);
 					});
@@ -683,29 +682,29 @@ if (cluster.isMaster) {
 		client.end();
 	}
 
-  function doSubmit(result,time,conf){
-		log('==> doSubmit():  result.type:'+result.type+', result.number:'+result.number+', result.time:'+result.time);
+	function doSubmit(result,time,conf){
+		log('====> doSubmit()-1:  result.type:'+result.type+', result.number:'+result.number+', result.time:'+result.time+',time'+time);
 		var actionNo = ((1000+parseInt(result.number))+'').substring(1);
 		result.time = setTimeNo(result.time,time);
 		result.number = dtFormat(time,'yyyyMMdd') + actionNo;
-		
+
 		//genernateData(data);
 		result.data = random_data_k3();
-	  log('result.data:'+result.data+', result.type:'+result.type+', result.number:'+result.number+', result.time:'+result.time);
-	  
-	  if (!result || !result.hasOwnProperty('number')) throw('系统计算时出现错误，稍后重试');
+		log('====> doSubmit()-2:  LiRunLv：'+LiRunLv+',lrRange='+lrRange+', result.data:'+result.data+', result.type:'+result.type+', result.number:'+result.number+', result.time:'+result.time);
+
+		if (!result || !result.hasOwnProperty('number')) throw('系统计算时出现错误，稍后重试');
 		result.number = result.number.replace('-', '');
-		
+
 		try{
-				if(result.type=='25'){ //result.type=='26' || result.type=='5' || result.type=='30' || result.type=='14'
-					liRunData(result, conf);
-				}else{
-					submitData(result, conf);
-				}
+			if(LiRunLv!='0' && result.type=='25'){ //result.type=='26' || result.type=='5' || result.type=='30' || result.type=='14'
+				liRunData(result, conf);
+			}else{
+				submitData(result, conf);
+			}
 		}catch(err){
-				throw('提交系统数据时出错：'+err);
+			throw('提交系统数据时出错：'+err);
 		}
-  }
+	}
   
   function dtFormat(time, format){
 	    var t = new Date(time);
@@ -735,21 +734,29 @@ if (cluster.isMaster) {
 	}
 
 	function setTimeNo(actionTime, time) {
-//		var reg=/(\d{2}\:){2}\d{2}/;
-//		var match=actionTime.match(reg);
-//		if(!match){
-//			throw('解析数据失败');
-//		}
+		var reg=/(\d{2}\:){2}\d{2}/;
+		var match=actionTime.match(reg);
+		if(!match){
+			throw('彩种开奖时间设置不正确，请确认。');
+		}
 
-    var myDate = new Date();
-		if(time)
-			myDate = new Date(time);
+		var myDate = new Date();
+		if(time) myDate = new Date(time);
 		var year = myDate.getFullYear();       //年   
-	  var month = myDate.getMonth() + 1;     //月   
-	  var day = myDate.getDate();            //日
+		var month = myDate.getMonth() + 1;     //月   
+		var day = myDate.getDate();            //日
 		if(month < 10) month="0"+month;
 		if(day < 10) day="0"+day;
 		return year + "-" + month + "-" + day + " " + actionTime;
 	}
-	
+
+	function sleeps(numberMillis) {
+	    var now = new Date();
+	    var exitTime = now.getTime() + numberMillis;
+	    while (true) {
+	        now = new Date();
+	        if (now.getTime() > exitTime)
+	            return;
+	    }
+	}
 }

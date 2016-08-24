@@ -912,7 +912,8 @@ exports.dbinfo={
 	host: 'localhost',
 	user: 'root',
 	password: '123456@',
-	database:'lottery'
+	database: 'lottery',
+	port: 3307
 }
 
 global.log=function(log){
