@@ -651,7 +651,7 @@ if (cluster.isMaster) {
 		if(time===null)
 			time = Math.floor((new Date()).getTime()); // 单位：毫秒
 			
-		Typeftime = Typeftime?parseInt(Typeftime):30;
+		Typeftime = Typeftime?parseInt(Typeftime):20;
 		var action_time = dtFormat(time + Typeftime*1000,'HH:mm:ss');
 		log('==> systemKJ(): time:'+time+',action_time:'+action_time+',Typeftime='+Typeftime);
 		client.query("SELECT actionNo,actionTime FROM lottery_data_time WHERE type=? AND actionTime <=? ORDER BY actionTime DESC LIMIT 1", [type,action_time], function(err, data){
